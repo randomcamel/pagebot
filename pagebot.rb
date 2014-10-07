@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 
-require 'cinch'
 require 'circular_queue'
 require 'hipchat'
 require 'summer'
@@ -27,9 +26,10 @@ end
 # => {"id"=>864742, "links"=>{"self"=>"https://api.hipchat.com/v2/room/864742"}}
 
 class Bot < Summer::Connection
-  HIPCHAT_ROOM = "IRC 2"
-  RATE_LIMIT_PERIOD_SEC = 30
+  HIPCHAT_ROOM = "Windows"
+  RATE_LIMIT_PERIOD_SEC = 360
   MENTIONS_PER_LIMIT_PERIOD = 2
+  WINDOWS_USERS = %w{@jmundrawala @adamedx @btm @cdoherty}
 
   def initialize(*args)
     @hipchat = HipChat::Client.new(HIPCHAT_API_KEY, :api_version => 'v2')
@@ -57,22 +57,18 @@ class Bot < Summer::Connection
 
   def notify_hipchat!(sender, channel, message)
     msg = <<-EOS
-IRC alert for @cdoherty:
+IRC alert:
 
 #{channel}: <#{sender[:nick]}> #{message}
 EOS
     if within_rate_limit?
-      @hipchat[HIPCHAT_ROOM].send("cdoherty", msg, :color => "purple", :message_format => "text")
+      @hipchat[HIPCHAT_ROOM].send("pagebot", msg, :color => "yellow", :message_format => "text")
       count_notification!
-      privmsg("notified hipchat", channel)
-    else
-      privmsg("rate-limited to #{MENTIONS_PER_LIMIT_PERIOD} every #{RATE_LIMIT_PERIOD_SEC} seconds",
-              channel)
     end
   end
 
   def channel_message(sender, channel, message)
-    if message =~ /xx/i
+    if message =~ /windows/i
       notify_hipchat!(sender, channel, message)
       puts "period start: #{@latest_period_start} ; count: #{@mention_count}"
     end
@@ -80,7 +76,7 @@ EOS
 end
 
 if ARGV.size == 0
-  Bot.new("localhost")
+  Bot.new("irc.freenode.net")
 else
   @c = HipChat::Client.new(HIPCHAT_API_KEY, :api_version => 'v2')
   binding.pry
