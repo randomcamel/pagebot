@@ -29,7 +29,6 @@ class Bot < Summer::Connection
   HIPCHAT_ROOM = "Windows"
   RATE_LIMIT_PERIOD_SEC = 360
   MENTIONS_PER_LIMIT_PERIOD = 2
-  WINDOWS_USERS = %w{@jmundrawala @adamedx @btm @cdoherty}
 
   def initialize(*args)
     @hipchat = HipChat::Client.new(HIPCHAT_API_KEY, :api_version => 'v2')
@@ -57,9 +56,7 @@ class Bot < Summer::Connection
 
   def notify_hipchat!(sender, channel, message)
     msg = <<-EOS
-IRC alert:
-
-#{channel}: <#{sender[:nick]}> #{message}
+#{Time.now.strftime('%H:%M')} #{channel}: <#{sender[:nick]}> #{message}
 EOS
     if within_rate_limit?
       @hipchat[HIPCHAT_ROOM].send("pagebot", msg, :color => "yellow", :message_format => "text")
@@ -77,6 +74,9 @@ end
 
 if ARGV.size == 0
   Bot.new("irc.freenode.net")
+elsif ARGV[0] == "-d"
+  Bot::HIPCHAT_ROOM = "IRC 2"
+  Bot.new("localhost")
 else
   @c = HipChat::Client.new(HIPCHAT_API_KEY, :api_version => 'v2')
   binding.pry
