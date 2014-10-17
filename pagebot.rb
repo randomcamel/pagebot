@@ -4,10 +4,11 @@ require 'circular_queue'
 require 'hipchat'
 require 'summer'
 
+require 'logger'
 require 'pry'
 
 # hipchat key.
-require './secrets'
+require_relative 'secrets'
 
 # eventually it'd be nice to have surrounding context.
 class Rings
@@ -25,6 +26,29 @@ end
 # [3] pry(main)> room = c.create_room("IRC Integration")
 # => {"id"=>864742, "links"=>{"self"=>"https://api.hipchat.com/v2/room/864742"}}
 
+require 'net/smtp'
+
+class Mailer
+  def self.send_email(to,opts={})
+    opts[:server]      ||= 'localhost'
+    opts[:from]        ||= 'email@example.com'
+    opts[:from_alias]  ||= 'Example Emailer'
+    opts[:subject]     ||= "You need to see this"
+    opts[:body]        ||= "Important stuff!"
+
+    msg = <<-END_OF_MESSAGE
+From: #{opts[:from_alias]} <#{opts[:from]}>
+To: <#{to}>
+Subject: #{opts[:subject]}
+
+#{opts[:body]}
+END_OF_MESSAGE
+
+    Net::SMTP.start(opts[:server]) do |smtp|
+      smtp.send_message msg, opts[:from], to
+    end
+  end
+end
 class Bot < Summer::Connection
   HIPCHAT_ROOM = "Windows"
   RATE_LIMIT_PERIOD_SEC = 360
@@ -34,6 +58,7 @@ class Bot < Summer::Connection
     @hipchat = HipChat::Client.new(HIPCHAT_API_KEY, :api_version => 'v2')
     @mention_count = 0
     @latest_period_start = Time.now - RATE_LIMIT_PERIOD_SEC
+    @log = Logger.new STDOUT
 
     super(*args)
   end
@@ -65,12 +90,16 @@ EOS
   end
 
   def channel_message(sender, channel, message)
-    if message =~ /windows/i
+    if message =~ /windows|dsc[\W]*|microsoft|msft|powershell|winrm/i
       notify_hipchat!(sender, channel, message)
       puts "period start: #{@latest_period_start} ; count: #{@mention_count}"
     end
   end
 end
+
+@log = Logger.new STDOUT
+
+Dir.chdir(File.dirname(File.expand_path(__FILE__)))
 
 if ARGV.size == 0
   Bot.new("irc.freenode.net")
