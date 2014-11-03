@@ -20,7 +20,7 @@ You can run the script directly, which connects it to the FreeNode IRC network:
 
 or in debug mode, which forces it to connect to a local `ircd`. I use [ngircd](http://ngircd.barton.de/index.php.en), probably available through your local package system; it requires no configuration and speeds up development considerably compared to connecting to a public IRC network.
 
-    ./pagebot debug
+    ./pagebot -d
 
 Finally, there's a control script to run Pagebot under the handy [daemons](https://github.com/ghazel/daemons) gem, which will restart it if it crashes. I did once see the bot fail to work even though it was running, but mostly it seems to be okay.
 
