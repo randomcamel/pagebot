@@ -70,7 +70,7 @@ Dir.chdir(File.dirname(File.expand_path(__FILE__)))
 if ARGV.size == 0
   Bot.new(IRC_SERVER)
 elsif ARGV[0] == "-d"
-  Bot::HIPCHAT_ROOM = "Bot Testing Room"
+  Bot::HIPCHAT_ROOM = "Bots Only"
   Bot.new("localhost")
 else
   @c = HipChat::Client.new(HIPCHAT_API_KEY, :api_version => 'v2')
