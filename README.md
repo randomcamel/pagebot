@@ -13,10 +13,13 @@ git-clone or scp the repo to the target machine.
 Pagebot expects a file at `config/bot_config.rb`, with the following constants. An example file is at `bot_config.rb.example`.
 
     HIPCHAT_API_KEY = "your HipChat API v2 key",
+    HIPCHAT_ROOM = "Ops"
+    REGEX = %r{wensleydale|cheddar|ed[ae]m}i
+
     IRC_SERVER = "irc.freenode.net"
     NICK = "bot_irc_nick"
     CHANNELS = ["#edam", "#port_salut"]
-    HIPCHAT_ROOM = "Ops"
+
     RATE_LIMIT_PERIOD_SEC = 360
     MENTIONS_PER_LIMIT_PERIOD = 2
 
