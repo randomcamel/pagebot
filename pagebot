@@ -54,13 +54,14 @@ EOS
     if within_rate_limit?
       @hipchat[HIPCHAT_ROOM].send("pagebot", msg, :color => "yellow", :message_format => "text")
       count_notification!
+      @log.info "Notified HipChat room '#{HIPCHAT_ROOM}'"
     end
   end
 
   def channel_message(sender, channel, message)
     if message =~ REGEX
       notify_hipchat!(sender, channel, message)
-      puts "period start: #{@latest_period_start} ; count: #{@mention_count}"
+      @log.info "period start: #{@latest_period_start} ; count: #{@mention_count}"
     end
   end
 end
