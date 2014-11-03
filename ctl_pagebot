@@ -2,7 +2,7 @@
 
 require 'daemons'
 
-Daemons.run('pagebot.rb', :app_name => 'pagebot',
+Daemons.run('pagebot', :app_name => 'pagebot',
             :multiple => false,
             :monitor => true,
             :log_output => true)
