@@ -1,0 +1,7 @@
+HIPCHAT_API_KEY = "your HipChat API v2 key",
+IRC_SERVER = "irc.freenode.net"
+NICK = "bot_irc_nick"
+CHANNELS = ["#edam", "#port_salut"]
+HIPCHAT_ROOM = "Ops"
+RATE_LIMIT_PERIOD_SEC = 360
+MENTIONS_PER_LIMIT_PERIOD = 2
