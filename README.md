@@ -23,6 +23,8 @@ Pagebot expects a file at `config/bot_config.rb`, with the following constants. 
     RATE_LIMIT_PERIOD_SEC = 360
     MENTIONS_PER_LIMIT_PERIOD = 2
 
+*[For reasons not yet understood, joining multiple channels doesn't actually work.]*
+
 Do `bundle install` to make sure the necessary gems are installed. Depending on your environment, `bundle exec` can probably be omitted.
 
 You can run the script directly, which connects it to the FreeNode IRC network:
