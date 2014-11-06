@@ -16,10 +16,25 @@ class Bot < Summer::Connection
     @latest_period_start = Time.now - RATE_LIMIT_PERIOD_SEC
     @log = Logger.new STDOUT
 
+    @log.info "Config: #{config}"
+
     write_summer_config
 
     # this looks weird, but Summer doesn't read the config file until we call the superclass constructor.
     super(*args)
+  end
+
+  def config
+    {
+      hipchat_key: HIPCHAT_API_KEY,
+      hipchat_room: HIPCHAT_ROOM,
+      regex: REGEX,
+      nick: NICK,
+      channels: CHANNELS,
+      irc_server: IRC_SERVER,
+      rate_limit_period_sec: RATE_LIMIT_PERIOD_SEC,
+      mentions_per_limit_period: MENTIONS_PER_LIMIT_PERIOD,
+    }
   end
 
   def write_summer_config
@@ -52,7 +67,7 @@ class Bot < Summer::Connection
 #{Time.now.strftime('%H:%M')} #{channel}: <#{sender[:nick]}> #{message}
 EOS
     if within_rate_limit?
-      @hipchat[HIPCHAT_ROOM].send("pagebot", msg, :color => "yellow", :message_format => "text")
+      @hipchat[HIPCHAT_ROOM].send("Pagebot", msg, :color => "yellow", :message_format => "text")
       count_notification!
       @log.info "Notified HipChat room '#{HIPCHAT_ROOM}'"
     end
