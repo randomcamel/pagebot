@@ -7,6 +7,7 @@ require 'yaml'
 require 'summer'
 
 require_relative 'config/bot_config'
+require_relative 'monkeypatch'
 
 class Bot < Summer::Connection
 
@@ -30,6 +31,7 @@ class Bot < Summer::Connection
       hipchat_room: HIPCHAT_ROOM,
       regex: REGEX,
       nick: NICK,
+      nickserv_password: NICKSERV_PASSWORD,
       channels: CHANNELS,
       irc_server: IRC_SERVER,
       rate_limit_period_sec: RATE_LIMIT_PERIOD_SEC,
@@ -39,7 +41,12 @@ class Bot < Summer::Connection
 
   def write_summer_config
     Dir.mkdir "config" rescue nil
-    config_text = { nick: NICK, channels: CHANNELS }.to_yaml
+    config_text = {
+        nick: NICK,
+        channels: CHANNELS,
+        nickserv_password: NICKSERV_PASSWORD
+      }.to_yaml
+
     File.open("config/summer.yml", "w") do |f|
       f.puts config_text
     end
