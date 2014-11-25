@@ -5,6 +5,7 @@ require 'logger'
 require 'hipchat'
 require 'yaml'
 require 'summer'
+require 'pry'
 
 require_relative 'config/bot_config'
 require_relative 'monkeypatch'
@@ -12,9 +13,9 @@ require_relative 'monkeypatch'
 class Bot < Summer::Connection
 
   def initialize(*args)
-    @hipchat = HipChat::Client.new(HIPCHAT_API_KEY, :api_version => 'v2')
+    @hipchat = HipChat::Client.new(bot_config[:hipchat_key], :api_version => 'v2')
     @mention_count = 0
-    @latest_period_start = Time.now - RATE_LIMIT_PERIOD_SEC
+    @latest_period_start = Time.now - bot_config[:rate_limit_period_sec]
     @log = Logger.new STDOUT
 
     @log.info "Config: #{config}"
@@ -25,8 +26,8 @@ class Bot < Summer::Connection
     super(*args)
   end
 
-  def config
-    {
+  def bot_config
+    @bot_config ||= {
       hipchat_key: HIPCHAT_API_KEY,
       hipchat_room: HIPCHAT_ROOM,
       regex: REGEX,
@@ -42,9 +43,9 @@ class Bot < Summer::Connection
   def write_summer_config
     Dir.mkdir "config" rescue nil
     config_text = {
-        nick: NICK,
-        channels: CHANNELS,
-        nickserv_password: NICKSERV_PASSWORD
+        nick: bot_config[:nick],
+        channels: bot_config[:channels],
+        nickserv_password: bot_config[:nickserv_password],
       }.to_yaml
 
     File.open("config/summer.yml", "w") do |f|
@@ -54,13 +55,13 @@ class Bot < Summer::Connection
   end
 
   def within_rate_limit?
-    !(@mention_count >= MENTIONS_PER_LIMIT_PERIOD &&
-      (Time.now - @latest_period_start) <= RATE_LIMIT_PERIOD_SEC)
+    !(@mention_count >= bot_config[:mentions_per_limit_period] &&
+      (Time.now - @latest_period_start) <= bot_config[:rate_limit_period_sec])
   end
 
   def count_notification!
     # if we're outside the limit period, reset the period and the count.
-    if (Time.now - @latest_period_start) > RATE_LIMIT_PERIOD_SEC
+    if (Time.now - @latest_period_start) > bot_config[:rate_limit_period_sec]
       @latest_period_start = Time.now
       @mention_count = 1
     # otherwise just increment the count.
@@ -74,16 +75,19 @@ class Bot < Summer::Connection
 #{Time.now.strftime('%H:%M')} #{channel}: <#{sender[:nick]}> #{message}
 EOS
     if within_rate_limit?
-      @hipchat[HIPCHAT_ROOM].send("Pagebot", msg, :color => "yellow", :message_format => "text")
+      @log.info "Notifying HipChat room '#{bot_config[:hipchat_room]}'"
+      @hipchat[bot_config[:hipchat_room]].send("Pagebot", msg, :color => "yellow", :message_format => "text")
       count_notification!
-      @log.info "Notified HipChat room '#{HIPCHAT_ROOM}'"
     end
   end
 
   def channel_message(sender, channel, message)
-    if message =~ REGEX
+    binding.pry
+    if message =~ bot_config[:regex]
       notify_hipchat!(sender, channel, message)
       @log.info "period start: #{@latest_period_start} ; count: #{@mention_count}"
+    else
+      @log.info ""
     end
   end
 end
