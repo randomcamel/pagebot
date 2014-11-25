@@ -18,7 +18,7 @@ class Bot < Summer::Connection
     @latest_period_start = Time.now - bot_config[:rate_limit_period_sec]
     @log = Logger.new STDOUT
 
-    @log.info "Config: #{config}"
+    @log.info "Config: #{bot_config}"
 
     write_summer_config
 
@@ -33,6 +33,7 @@ class Bot < Summer::Connection
       regex: REGEX,
       nick: NICK,
       nickserv_password: NICKSERV_PASSWORD,
+      ignore_nicks: IGNORE_NICKS,
       channels: CHANNELS,
       irc_server: IRC_SERVER,
       rate_limit_period_sec: RATE_LIMIT_PERIOD_SEC,
@@ -70,6 +71,10 @@ class Bot < Summer::Connection
     end
   end
 
+  def ignore?(sender)
+    bot_config[:ignore_nicks].include?(sender)
+  end
+
   def notify_hipchat!(sender, channel, message)
     msg = <<-EOS
 #{Time.now.strftime('%H:%M')} #{channel}: <#{sender[:nick]}> #{message}
@@ -82,10 +87,13 @@ EOS
   end
 
   def channel_message(sender, channel, message)
-    binding.pry
     if message =~ bot_config[:regex]
-      notify_hipchat!(sender, channel, message)
-      @log.info "period start: #{@latest_period_start} ; count: #{@mention_count}"
+      if ignore?(sender[:nick])
+        @log.info "ignoring nick '#{sender}' due to match with #{bot_config[:ignore_nicks]}"
+      else
+        notify_hipchat!(sender, channel, message)
+        @log.info "period start: #{@latest_period_start} ; count: #{@mention_count}"
+      end
     else
       @log.info ""
     end
