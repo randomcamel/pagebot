@@ -18,16 +18,21 @@ Pagebot expects a file at `config/bot_config.rb`, with the following constants. 
 
     IRC_SERVER = "irc.freenode.net"
     NICK = "bot_irc_nick"
+    NICKSERV_PASSWORD = "top-loading fruit"
     CHANNELS = ["#edam", "#port_salut"]
 
     RATE_LIMIT_PERIOD_SEC = 360
     MENTIONS_PER_LIMIT_PERIOD = 2
 
-*[For reasons not yet understood, joining multiple channels doesn't actually work.]*
-
 Do `bundle install` to make sure the necessary gems are installed. Depending on your environment, `bundle exec` can probably be omitted.
 
-You can run the script directly, which connects it to the FreeNode IRC network:
+The recommended way is to run Pagebot under the handy [daemons](https://github.com/ghazel/daemons) gem, which will restart it if it crashes. Sometimes it stays connected to IRC but stops passing notifications; I have a cronjob kick it every night. (Scheduled restarts can probably be done using the `daemons` API; PRs welcome.)
+
+    ./ctl_pagebot start
+
+The control script also supports the standard `stop`, `status`, and `restart` subcommands.
+
+You can run the script directly in the foreground, which will default to connecting to [FreeNode](https://freenode.net/):
 
     ./pagebot
 
@@ -35,8 +40,4 @@ or in debug mode, which forces it to connect to a local `ircd`. I use [ngircd](h
 
     ./pagebot -d
 
-Finally, there's a control script to run Pagebot under the handy [daemons](https://github.com/ghazel/daemons) gem, which will restart it if it crashes. I did once see the bot fail to work even though it was running, but mostly it seems to be okay.
-
-    ./ctl_pagebot start
-
-The control script also supports `stop`, `status`, and `restart`.
+Feel free to ask questions via Github issues.
