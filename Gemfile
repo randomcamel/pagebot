@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
 gem "daemons"
-gem "hipchat"
 gem "pry"
+gem "slack-post"
 gem "summer"

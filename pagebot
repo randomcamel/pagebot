@@ -2,8 +2,8 @@
 
 require 'logger'
 
-require 'hipchat'
 require 'yaml'
+require 'slack/post'
 require 'summer'
 require 'pry'
 
@@ -12,8 +12,15 @@ require_relative 'monkeypatch'
 
 class Bot < Summer::Connection
 
-  def initialize(*args)
-    @hipchat = HipChat::Client.new(bot_config[:hipchat_key], :api_version => 'v2')
+  def initialize(irc_server, overrides={})
+    bot_config.merge!(overrides)
+
+    Slack::Post.configure(
+        webhook_url: bot_config[:slack_url],
+        username:    bot_config[:bot_name] || 'pagebot',
+        icon_emoji:  ':windows:',
+    )
+
     @mention_count = 0
     @latest_period_start = Time.now - bot_config[:rate_limit_period_sec]
     @log = Logger.new STDOUT
@@ -23,13 +30,14 @@ class Bot < Summer::Connection
     write_summer_config
 
     # this looks weird, but Summer doesn't read the config file until we call the superclass constructor.
-    super(*args)
+    super(irc_server)
   end
 
   def bot_config
     @bot_config ||= {
-      hipchat_key: HIPCHAT_API_KEY,
-      hipchat_room: HIPCHAT_ROOM,
+      slack_url: SLACK_URL,
+      slack_room: SLACK_ROOM,
+      bot_name: BOT_NAME,
       regex: REGEX,
       nick: NICK,
       nickserv_password: NICKSERV_PASSWORD,
@@ -75,13 +83,24 @@ class Bot < Summer::Connection
     bot_config[:ignore_nicks].include?(sender)
   end
 
-  def notify_hipchat!(sender, channel, message)
+  def notify_slack!(sender, channel, message)
     msg = <<-EOS
-#{Time.now.strftime('%H:%M')} #{channel}: <#{sender[:nick]}> #{message}
+<#{sender[:nick]}> #{message}
 EOS
     if within_rate_limit?
-      @log.info "Notifying HipChat room '#{bot_config[:hipchat_room]}'"
-      @hipchat[bot_config[:hipchat_room]].send("Pagebot", msg, :color => "yellow", :message_format => "text")
+      @log.info "Notifying Slack room '#{bot_config[:slack_room]}'"
+
+      att = [
+        {
+          color: "yellow",
+          pretext: channel,
+          fallback_text: msg,
+          text: msg,
+          author_name: channel,
+        }
+      ]
+      Slack::Post.post_with_attachments(nil, att, bot_config[:slack_room])
+
       count_notification!
     end
   end
@@ -91,7 +110,7 @@ EOS
       if ignore?(sender[:nick])
         @log.info "ignoring nick '#{sender}' due to match with #{bot_config[:ignore_nicks]}"
       else
-        notify_hipchat!(sender, channel, message)
+        notify_slack!(sender, channel, message)
         @log.info "period start: #{@latest_period_start} ; count: #{@mention_count}"
       end
     else
@@ -105,8 +124,5 @@ Dir.chdir(File.dirname(File.expand_path(__FILE__)))
 if ARGV.size == 0
   Bot.new(IRC_SERVER)
 elsif ARGV[0] == "-d"
-  Bot::HIPCHAT_ROOM = "Bots Only"
-  Bot.new("localhost")
-else
-  @c = HipChat::Client.new(HIPCHAT_API_KEY, :api_version => 'v2')
+  Bot.new("localhost", slack_room: '@cdoherty')
 end
