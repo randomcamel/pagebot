@@ -15,12 +15,6 @@ class Bot < Summer::Connection
   def initialize(irc_server, overrides={})
     bot_config.merge!(overrides)
 
-    Slack::Post.configure(
-        webhook_url: bot_config[:slack_url],
-        username:    bot_config[:bot_name] || 'pagebot',
-        icon_emoji:  ':windows:',
-    )
-
     @mention_count = 0
     @latest_period_start = Time.now - bot_config[:rate_limit_period_sec]
     @log = Logger.new STDOUT
@@ -87,18 +81,27 @@ class Bot < Summer::Connection
     msg = <<-EOS
 <#{sender[:nick]}> #{message}
 EOS
+
     if within_rate_limit?
       @log.info "Notifying Slack room '#{bot_config[:slack_room]}'"
 
       att = [
         {
           color: "yellow",
-          pretext: channel,
           fallback_text: msg,
           text: msg,
           author_name: channel,
         }
       ]
+
+      bot_name = bot_config[:bot_name] || 'pagebot'
+
+      Slack::Post.configure(
+          webhook_url: bot_config[:slack_url],
+          username:    "#{bot_name} #{channel}",
+          icon_emoji:  ':windows:',
+      )
+
       Slack::Post.post_with_attachments(nil, att, bot_config[:slack_room])
 
       count_notification!
