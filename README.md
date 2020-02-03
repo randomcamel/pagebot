@@ -1,6 +1,6 @@
 # pagebot
 
-A bot to listen on IRC for a regex match, and notify a HipChat room with the relevant mentions. Because you can't pay attention to every chat system all the time.
+A bot to listen on IRC for a regex match, and notify a Slack room with the relevant mentions. Because you can't pay attention to every chat system all the time.
 
 Despite having a reasonable config file, Pagebot is still hackware.
 
@@ -12,8 +12,8 @@ git-clone or scp the repo to the target machine.
 
 Pagebot expects a file at `config/bot_config.rb`, with the following constants. An example file is at `bot_config.rb.example`.
 
-    HIPCHAT_API_KEY = "your HipChat API v2 key",
-    HIPCHAT_ROOM = "Ops"
+    SLACK_URL = "the Slack URL to post to",
+    SLACK_ROOM = "Ops"
     REGEX = %r{wensleydale|cheddar|ed[ae]m}i
 
     IRC_SERVER = "irc.freenode.net"
